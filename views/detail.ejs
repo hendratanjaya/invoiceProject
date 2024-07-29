@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Detail</title>
+    <link rel="stylesheet" type="text/css" href="/view.css">
+</head>
+<body>
+    
+    <div class="container">
+        <h1>Detail Invoice: <%= title%></h1>
+        <div class="scrollable-table">
+            <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Action
+                        <input type="checkbox", class="master-status-checkbox">
+                    </th>
+                    <th scope="col">No Pesanan/Invoice</th>
+                    <th scope="col">No Resi</th>
+                    <th scope="col">Tanggal</th>
+                    <th scope="col">No SKU</th>
+                    <th scope="col">Jumlah Pesanan</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+             
+                    <tbody>
+                        
+                            <tr>
+                            <% for (let i of order){ %>
+                                <td scope="row">
+                                    <input type="checkbox" class="status-checkbox" data-id="<%= i.Id %>" <%= i.Status === 'diterima' ? 'checked' : '' %> />
+                                    
+                                </td>
+                                <td scope="row"><%=i.OrderNumber %></td>
+                                <td scope="row"><%=i.ReceiptNumber %></td>
+                                <td scope="row"><%=i.OrderDate %></td>
+                                <td scope="row"><%=i.SkuID %></td>
+                                <td scope="row">
+                                    <input type="number" class="quantity-input" data-id="<%= i.Id%>" value="<%=i.Quantity %>">
+                                    
+                                </td>
+                                <td scope="row"><%=i.Status %></td>
+                            </tr>
+                            <%}%>
+                      
+                    </tbody>
+                
+            </table>
+            
+            
+        </div>
+        <button type="button" id="confirm-button" class="btn btn-primary btn-lg">Konfirmasi</button>
+        <button type="button" id="wrong-button" class="btn btn-primary btn-lg">Barang Ditukar</button>
+    </div>
+    
+
+    <script>
+        document.addEventListener("DOMContentLoaded",  function(){
+            const confirmButton = document.getElementById("confirm-button");
+            let statusUpdates = [];
+            const checkboxes = document.querySelectorAll(".status-checkbox");
+            const masterCheckbox = document.querySelector(".master-status-checkbox");
+
+            masterCheckbox.addEventListener("change", function(){
+                checkboxes.forEach(checkbox =>{
+                    checkbox.checked = masterCheckbox.checked;
+                });
+            });
+
+            confirmButton.addEventListener("click", function(){
+                
+                const quantities = document.querySelectorAll(".quantity-input");
+                checkboxes.forEach(checkbox =>{
+                    const id = checkbox.getAttribute("data-id");
+                    const status = checkbox.checked ? "diterima" : "tidak lengkap";
+                    const quantityInput = document.querySelector(`.quantity-input[data-id="${id}"]`);
+                    const quantity = quantityInput ? quantityInput.value : 0;
+                    statusUpdates.push({id,status,quantity});
+                });
+
+                if(confirm("Anda yakin akan mengubah status pada data? ")){
+                    fetch("/update-status", {
+                        method : "POST",
+                        headers : {
+                            "Content-Type" : "application/json"
+                        },
+                        body : JSON.stringify({statusUpdates})
+                    }).then (response => response.json()).then(data =>{
+                        if(data.success){
+                            alert("Status Invoice berhasil diubah");
+                            location.reload();
+                        }else{
+                            alert("Gagal mengubah status Invoice");
+                        }
+                    }).catch(error =>{
+                        console.log("Error updating : ", error);
+                        alert("Error saat mengubah status data");
+                    })
+                }
+            });
+
+            const wrongButton = document.getElementById("wrong-button");
+            wrongButton.addEventListener("click", function(){
+                const status = "barang ditukar";
+                checkboxes.forEach(checkbox =>{
+                    const id = checkbox.getAttribute("data-id");
+                    const quantityInput = document.querySelector(`.quantity-input[data-id="${id}"]`);
+                    const quantity = quantityInput ? quantityInput.value : 0;
+
+                    statusUpdates.push({id,status,quantity});
+                });
+
+                if(confirm("Anda yakin akan mengubah status pada data? ")){
+                    fetch("/update-status", {
+                        method : "POST",
+                        headers : {
+                            "Content-Type" : "application/json"
+                        },
+                        body : JSON.stringify({statusUpdates})
+                    }).then (response => response.json()).then(data =>{
+                        if(data.success){
+                           // alert("Status Invoice berhasil diubah");
+                            location.reload();
+                        }/*else{
+                            alert("Gagal mengubah status Invoice");
+                        }*/
+                    }).catch(error =>{
+                        console.log("Error updating : ", error);
+                        alert("Error saat mengubah status data");
+                    })
+                }
+
+            })
+
+        });
+
+
+        
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>

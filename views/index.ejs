@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>INVOICE</title>
+    <link rel="stylesheet" type="text/css" href="/view.css">
+    
+   
+</head>
+<body>
+    
+
+    <div class="container">
+        <h1><%= title%></h1>
+        <div class="data">
+            <form action="/search" method="get">
+                <div class="mb-3"> 
+                    <label for="search-invoice" class="form-label">Cari Invoice</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="invoice_form" id="search-invoice" placeholder="Masukan nomor resi/invoice">
+                        <input class="btn btn-primary" type="submit" value="Cari">
+                    </div>
+                </div>
+            </form>     
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="formFile" class="form-label">Input file .csv</label>
+                    <div class="input-group">
+                        <input class="form-control" type="file" id="formFile" name="file"  >
+                        
+                            <select class="form-select" aria-label="Default select example" name="marketplace">
+                                
+                                <option value="1">Shopee</option>
+                                <option value="2">Tokopedia</option>
+                                <option value="3">Lazada</option>
+                            </select>
+    
+                        <button class="btn btn-primary" type="submit">Input File</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="scrollable-table">
+            <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <!-- <th scope="col">ID</th> -->
+                    <th scope="col">No Pesanan/Invoice</th>
+                    <th scope="col">No Resi</th>
+                    <th scope="col">Tanggal</th>
+                    <th scope="col">No SKU</th>
+                    <th scope="col">Jumlah Pesanan</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+             
+                    <tbody>
+                        
+                            <tr>
+                            <% for (let i of invoices){ %>
+                                <!-- <td scope="row"><%=i.Id%></td> -->
+                                <td scope="row"><%=i.OrderNumber %></td>
+                                <td scope="row"><%=i.ReceiptNumber %></td>
+                                <td scope="row"><%=i.OrderDate %></td>
+                                <td scope="row"><%=i.SkuID %></td>
+                                <td scope="row"><%=i.Quantity %></td>
+                                <td scope="row"><%=i.Status %></td>
+                            </tr>
+                        <%}%>
+                      
+                    </tbody>
+                
+            </table>
+        </div>
+        <!-- <form id="invoice-form" action="/delete" method="post">
+
+            <label for="form-handler" class="form-label">Atur Invoice</label>
+            <div class="input-group mb-3">
+    
+                <input type="text" name="invoiceDetail" class="form-control" id="form-handler" aria-label="Text input with dropdown button" placeholder="Masukan nomor resi/invoice/id">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Atur Disini</button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="submitForm('delete')">Hapus</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="submitForm('accepted')">Diterima</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="submitForm('incomplete')">Tidak lengkap</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="submitForm('unaccepted')">Belum Diterima</a></li>
+                  
+                </ul>
+            </div>
+
+        </form> -->
+
+
+
+    </div>
+
+    <!-- <script>
+        function submitForm(action) {
+
+            console.log("submitForm function called with action:", action);
+            const form = document.getElementById('invoice-form');
+            const invoiceDetail = document.getElementById("form-handler").value;
+            var actionText = "";
+            if(invoiceDetail.trim() === "")
+                return;
+            
+            switch(action){
+                case "delete":actionText = "menghapus"; break
+                case "accepted": actionText = "mengubah status menjadi DITERIMA untuk"; break;
+                case "incomplete":actionText = "mengubah status menjadi TIDAK LENGKAP untuk"; break;
+                case "unaccepted":actionText = "mengubah status menjadi BELUM DITERIMA untuk"; break;
+
+            }
+
+            console.log(`Action: ${action}, Action Text: ${actionText}, Invoice Detail: ${invoiceDetail}`);
+            if(confirm(`Anda yakin ${actionText} invoice dengan detail: ${invoiceDetail}`)){
+                
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = 'action';
+                hiddenField.value = action;
+                form.appendChild(hiddenField);
+                form.submit();
+            }
+        }
+    </script> -->
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>
