@@ -1,0 +1,17 @@
+CREATE DATABASE IF NOT EXISTS invoicedb;
+
+USE invoicedb;
+
+CREATE TABLE IF NOT EXISTS Invoice (
+	Id INT PRIMARY KEY AUTO_INCREMENT,
+	ReceiptNumber VARCHAR(50) NOT NULL,
+    OrderNumber VARCHAR (50) NOT NULL,
+    OrderDate DATE NOT NULL,
+    SkuID VARCHAR (30) NOT NULL,
+    Quantity INT NOT NULL,
+	Status VARCHAR(15) NOT NULL
+	
+
+);
+
+
