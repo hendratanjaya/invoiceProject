@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS Invoice (
     SkuID VARCHAR (30) NOT NULL,
     Quantity INT NOT NULL,
 	Status VARCHAR(15) NOT NULL
-	
+	ReceiptStatus VARCHAR(30) NOT NULL,
+    Type VARCHAR(30)
 
 );
 
