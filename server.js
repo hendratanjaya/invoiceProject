@@ -72,7 +72,43 @@ db.connect((err)=>{
         });
     });   
 
-
+    app.get("/search", (req,res)=>{
+        const sql = `SELECT * FROM invoice WHERE ReceiptNumber LIKE ? OR OrderNumber LIKE ?`;
+        const form = req.query.search_form.trim();
+        if(form === "")
+            return res.redirect("/");
+        else{
+           
+            db.query(sql, [`%${form}%`, `%${form}%`], (err, result) =>{
+                if (err) {
+                    console.error("SQL error: " + err);
+                    res.status(500).send("Internal Server Error");
+                    return;
+                }
+    
+                const invoices = JSON.parse(JSON.stringify(result));
+                invoices.forEach(invoice =>{
+                    invoice.OrderDate = formatDate(invoice.OrderDate);
+                });
+                
+                
+                res.render("index", {invoices: invoices, title: "INVOICE"});
+    
+                // if(result.length > 0 ){
+                //     const order = JSON.parse(JSON.stringify(result));
+                //     order.forEach(order =>{
+                //         order.OrderDate = formatDate(order.OrderDate);
+                //     });
+                //     order.OrderDate = formatDate(order.OrderDate);
+    
+                //     res.render('detail',{order: order, title: `${form}`});
+                // }else{
+                //     res.send("No Result Found");
+                // }
+    
+            });
+        }
+    })
 
     app.post("/upload",upload.single("file"),(req,res)=>{
         const status = req.body.marketplace;
@@ -85,34 +121,38 @@ db.connect((err)=>{
                 return res.status(500).send('Error renaming file.');
             } 
             
-            var receipt,orderNum,orderDate,sku,quant;
-            const insertSql = `INSERT INTO invoice (ReceiptNumber,OrderNumber,OrderDate,SkuID,Quantity,Status) VALUES (?,?,?,?,?,"belum diterima")`;
+            let receipt,orderNum,orderDate,sku,quant,type;
+            const insertSql = `INSERT INTO invoice (ReceiptNumber,OrderNumber,OrderDate,SkuID,Quantity,Status,ReceiptStatus,Type) VALUES (?,?,?,?,?,"belum diterima","belum diatur",?)`;
             if(status === '1'){
                 
                 receipt = "No. Resi";
                 orderNum = "No. Pesanan";
                 orderDate = "Waktu Pembayaran Dilakukan";
                 sku = "Nomor Referensi SKU";
-                quant = "Jumlah Produk di Pesan"
-        
+                quant = "Jumlah Produk di Pesan";
+                type = "barang toko";
             }  
             else if(status === '2'){ 
                 receipt = "No Resi / Kode Booking";
                 orderNum = "Nomor Invoice";
                 orderDate = "Tanggal Pembayaran";
                 sku = "Nomor SKU";
-                quant = "Jumlah Produk Dibeli"
+                quant = "Jumlah Produk Dibeli";
+                type = "barang toko";
             }
             
             else if(status === '3'){
-               
+                type = "barang toko";
+            }else if(status === 4){
+
+                type = "barang dropship";
             }
                
             fs.createReadStream(newFilePath).pipe(csv()).on("data", (row)=>{
                 //var receipt,orderNum,orderDate,sku,quant;
                 const col1 = row[receipt];
                 const col2 = row[orderNum];
-                var col3 = row[orderDate];
+                let col3 = row[orderDate];
                 if(status === '2'){
                     col3 = formatToValidDate(col3);
                 }
@@ -120,7 +160,7 @@ db.connect((err)=>{
                 const col4 = row[sku];
                 const col5 = row[quant];
         
-                db.query(insertSql,[col1,col2,col3,col4,col5],(err,result)=>{
+                db.query(insertSql,[col1,col2,col3,col4,col5,type],(err,result)=>{
                     if(err)
                         console.log("failed insert" + err);
                     
@@ -151,7 +191,7 @@ db.connect((err)=>{
         //console.log(statusUpdates);
         const queries = statusUpdates.map(update =>{
             new Promise ((resolve,reject)=>{
-                db.query("UPDATE invoice SET Status = ?, Quantity = ? WHERE Id = ?", [update.status, update.quantity, update.id], (error, result) =>{
+                db.query("UPDATE invoice SET Status = ?, Quantity = ?, ReceiptStatus = ? WHERE Id = ?", [update.status, update.quantity, update.receiptStatus, update.id], (error, result) =>{
                     if (error) return reject(error);
                     resolve();
 
@@ -160,7 +200,8 @@ db.connect((err)=>{
         });
 9
         Promise.all(queries).then(()=>{
-            res.json({success : true});
+            res.json({success :true});
+
         }).catch(error =>{
             console.log("SQL Error : ", error);
             res.status(500).json({ success: false, message: "Internal Server Error"});
@@ -169,7 +210,7 @@ db.connect((err)=>{
     });
 });
 
-app.get("/search",(req,res)=>{
+app.get("/detail",(req,res)=>{
     const sql = `SELECT * FROM invoice WHERE ReceiptNumber LIKE ? OR OrderNumber LIKE ?`;
     const form = req.query.invoice_form.trim();
     if(form === "")
@@ -182,18 +223,27 @@ app.get("/search",(req,res)=>{
                 res.status(500).send("Internal Server Error");
                 return;
             }
+
+            // const invoices = JSON.parse(JSON.stringify(result));
+            // invoices.forEach(invoice =>{
+            //     invoice.OrderDate = formatDate(invoice.OrderDate);
+            // });
             
             
             //res.render("index", {invoices: invoices, title: "INVOICE"});
 
             if(result.length > 0 ){
                 const order = JSON.parse(JSON.stringify(result));
+                let status = null;
                 order.forEach(order =>{
                     order.OrderDate = formatDate(order.OrderDate);
+                    if(status === null){
+                        status = order.ReceiptStatus;
+                    }
                 });
                 order.OrderDate = formatDate(order.OrderDate);
 
-                res.render('detail',{order: order, title: `${form}`});
+                res.render('detail',{order: order, title: `${form}`, status: status});
             }else{
                 res.send("No Result Found");
             }
@@ -203,71 +253,150 @@ app.get("/search",(req,res)=>{
     
 });
 
-app.post("/process",(req,res)=>{
-    const form = req.body.invoiceDetail;
-    const action = req.body.action;
-    if(form.trim() === "")
-        return res.redirect("/");
+// app.post("/process",(req,res)=>{
+//     const form = req.body.invoiceDetail;
+//     const action = req.body.action;
+//     if(form.trim() === "")
+//         return res.redirect("/");
 
-    else{
+//     else{
 
-        var actionQuery = '';
-        if(action === "delete"){
+//         var actionQuery = '';
+//         if(action === "delete"){
            
             
-            actionQuery = "DELETE FROM invoice WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
-            db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
-                if(err){
-                    console.error("SQL error: " + err);
-                    res.status(500).send("Internal Server Error");
-                    return;
+//             actionQuery = "DELETE FROM invoice WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
+//             db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
+//                 if(err){
+//                     console.error("SQL error: " + err);
+//                     res.status(500).send("Internal Server Error");
+//                     return;
+//                 }
+
+                
+//             })
+
+//         }else if(action === "accepted"){
+
+//             actionQuery = "UPDATE invoice SET Status = 'diterima' WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
+//             db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
+//                 if(err){
+//                     console.error("SQL error: " + err);
+//                     res.status(500).send("Internal Server Error");
+//                     return;
+//                 }
+                
+                
+//             })
+//         }else if(action === "incomplete"){
+//             actionQuery = "UPDATE invoice SET Status = 'tidak lengkap' WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
+//             db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
+//                 if(err){
+//                     console.error("SQL error: " + err);
+//                     res.status(500).send("Internal Server Error");
+//                     return;
+//                 }
+
+                
+//             })
+//         }else if(action === "unaccepted"){
+
+//             actionQuery = "UPDATE invoice SET Status = 'belum diterima' WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
+//             db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
+//                 if(err){
+//                     console.error("SQL error: " + err);
+//                     res.status(500).send("Internal Server Error");
+//                     return;
+//                 }
+
+                
+//             })
+
+//         }
+
+//         return res.redirect("/");
+
+
+//     }
+// })
+
+app.get("/export",(req,res)=>{
+
+    const sql = "SELECT * FROM invoice WHERE 1";
+        db.query(sql,(err,result) =>{
+            const invoices = JSON.parse(JSON.stringify(result));
+            let received = 0, notReceived = 0, incomplete = 0, total = invoices.length;
+            invoices.forEach(invoice =>{
+                
+                invoice.OrderDate = formatDate(invoice.OrderDate);
+                switch(invoice.Status){
+                    case "diterima":received++; break;
+                    case "tidak lengkap": incomplete++; break;
+                    case "belum diterima": notReceived++; break;
                 }
+            });
+            
+            
+            res.render("export", {invoices:invoices,received:received,notReceived:notReceived,incomplete:incomplete,total:total,title: "Export Data"});
+        });
+    
+})
 
-                
-            })
+app.get("/export-data", (req,res)=>{
+    const type = req.query.type;
+    const status = req.query.status;
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
 
-        }else if(action === "accepted"){
+    console.log("Type:", type);
+    console.log("Status:", status);
+    console.log("Start Date:", startDate);
+    console.log("End Date:", endDate);
 
-            actionQuery = "UPDATE invoice SET Status = 'diterima' WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
-            db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
-                if(err){
-                    console.error("SQL error: " + err);
-                    res.status(500).send("Internal Server Error");
-                    return;
-                }
-                
-                
-            })
-        }else if(action === "incomplete"){
-            actionQuery = "UPDATE invoice SET Status = 'tidak lengkap' WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
-            db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
-                if(err){
-                    console.error("SQL error: " + err);
-                    res.status(500).send("Internal Server Error");
-                    return;
-                }
+    // let sqlQuery = "";
 
-                
-            })
-        }else if(action === "unaccepted"){
+    // if(startDate === "" || endDate === "" )
 
-            actionQuery = "UPDATE invoice SET Status = 'belum diterima' WHERE Id = ? OR ReceiptNumber = ? OR OrderNumber = ?"
-            db.query(actionQuery,[`${form}`, `${form}`,`${form}`], (err,result)=>{
-                if(err){
-                    console.error("SQL error: " + err);
-                    res.status(500).send("Internal Server Error");
-                    return;
-                }
+    const sqlQuery = "SELECT * FROM invoice WHERE Type = ? AND Status = ? AND (OrderDate BETWEEN ? AND ?)"
 
-                
-            })
+    db.query(sqlQuery, [`${type}`,`${status}`,`${startDate}`,`${endDate}`],(err,result) =>{
+        const invoices = JSON.parse(JSON.stringify(result));
+        let received = 0, notReceived = 0, incomplete = 0, total = invoices.length;
+        invoices.forEach(invoice =>{
+            invoice.OrderDate = formatDate(invoice.OrderDate);
 
+            switch(invoice.Status){
+                case "diterima":received++; break;
+                case "tidak lengkap": incomplete++; break;
+                case "belum diterima": notReceived++; break;
+            }
+        });
+        
+        
+        res.render("export", {invoices:invoices,received:received,notReceived:notReceived,incomplete:incomplete,total:total,title: "Export Data"});
+    });
+
+})
+
+app.get("/incomplete",(req,res) =>{
+
+    
+    const query = "SELECT OrderNumber, ReceiptStatus, Type FROM invoice WHERE ReceiptStatus = ? OR ReceiptStatus = ? GROUP BY OrderNumber, ReceiptStatus, Type ";
+    
+    db.query(query, ["tidak lengkap" , "belum diterima"], (err,result) =>{
+        if (err) {
+            console.error("SQL error: " + err);
+            res.status(500).send("Internal Server Error");
+            return;
         }
+        const invoices = JSON.parse(JSON.stringify(result));
+        //console.log(invoices);
+        res.render("incomplete",{invoices:invoices, title:"Pesanan Tertukar dan Tidak Lengkap"});
+        
 
-        return res.redirect("/");
+    })
+    
 
-
-    }
 })
 
 app.listen(3000, () =>{

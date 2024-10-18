@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/view.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><%= title%></h1>
+            <a href="/">Home</a>
+           
+        </div>
+
+        
+
+            <div class="data">
+                <form action="/detail" method="get">
+                    <div class="mb-3"> 
+                        <label for="search-invoice" class="form-label">Cari Invoice</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="invoice_form" id="search-invoice" placeholder="Masukan nomor resi/invoice">
+                            <input class="btn btn-primary" type="submit" value="Cari">
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="scrollable-table">
+    
+                <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <!-- <th scope="col">ID</th> -->
+                        <th scope="col">No Pesanan/Invoice</th>
+                        
+                        <th scope="col">Status</th>
+                        <th scope="col">Tipe</th>
+                        <th scope="col">Prosesf</th>
+                        
+                      </tr>
+                    </thead>
+                 
+                        <tbody>
+                            <tr>
+                                <% for (let i of invoices){ %>
+                                    
+                                    <td scope="row"><a href="/detail?invoice_form=<%=i.OrderNumber %>"><%=i.OrderNumber %></a></td>
+                                    <td scope="row"><%=i.ReceiptStatus %></td>
+                                    <td scope="row"><%=i.Type %></td>
+                            </tr>
+                            <%}%>
+                          
+                        </tbody>
+                    
+                </table>
+        
+            </div>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Export</title>
+    <link rel="stylesheet" type="text/css" href="/view.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="header">
+            <h1><%= title%></h1>
+           
+            <a href="/">Home</a>
+        </div>
+
+        <form action="/export-data" method="get">
+            <div class="exportForm">
+
+                <div class="typeContainer">
+                    <label for="type">Type</label>
+                    <select class="form-select"  name="type" aria-label="multiple select example">
+                        
+                        <option value="barang toko">Barang Toko</option>
+                        <option value="barang dropship">Barang Dropship</option>
+                    </select>
+                </div>
+
+                <div class="statusContainer">
+                    <label for="status">Status</label>
+                    <select class="form-select" name="status" aria-label="multiple select example">
+                        
+                        <option value="diterima">Diterima</option>
+                        <option value="tidak lengkap">Tidak Lengkap</option>
+                        <option value="belum diterima">Belum Diterima</option>
+                    </select>
+                </div>
+                <div class="dateContainer">
+
+                    <label for="startDate">Dari Tanggal:</label>
+                    <input type="date" name="startDate" class="form-control" >
+                </div>
+                <div class="dateContainer">
+
+                    <label for="endDate">Sampai Tanggal:</label>
+                    <input type="date" name="endDate" class="form-control" >
+                </div>
+                
+                <button id="exportBtn" class="btn btn-primary" type="submit">Cari</button>
+                
+            </div>
+
+        </form>
+        <label for="">Diterima: <%=received%> | Belum Diterima: <%=notReceived%> | Tidak Lengkap:  <%=incomplete%> | Total:  <%=total%></label>
+        <div class="exportContent" >
+            <div class="scrollable-table">
+    
+                <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        
+                        <th scope="col">No Pesanan/Invoice</th>
+                        <th scope="col">No Resi</th>
+                        <th scope="col">Tanggal</th>
+                        <th scope="col">No SKU</th>
+                        <th scope="col">Jumlah Pesanan</th>
+                        <th scope="col">Status</th>
+                      </tr>
+                    </thead>
+                 
+                        <tbody>
+                            
+                            <tr>
+                                <% for (let i of invoices){ %>
+                                    <!-- <td scope="row"><%=i.Id%></td> -->
+                                    <td scope="row"><%=i.OrderNumber %></td>
+                                    <td scope="row"><%=i.ReceiptNumber %></td>
+                                    <td scope="row"><%=i.OrderDate %></td>
+                                    <td scope="row"><%=i.SkuID %></td>
+                                    <td scope="row"><%=i.Quantity %></td>
+                                    <td scope="row"><%=i.Status %></td>
+                                </tr>
+                            <%}%>
+                          
+                          
+                        </tbody>
+                    
+                </table>
+            </div>
+        </div>
+        <% const data = JSON.stringify(invoices);%>
+        <button id="" class="btn btn-primary" type="button" onclick='exportToExcel(<%=data%>)'>download</button>
+    </div>
+    <script>
+       
+        function exportToExcel(data){
+            const header = ["No Invoice/Pesanan", "No Resi", "Tanggal","No SKU","Jumlah Pesanan","Status"];
+            const worksheetData = [];
+
+            worksheetData.push(header);
+            
+            data.forEach(item =>{
+                worksheetData.push([item.OrderNumber, item.ReceiptNumber, item.OrderDate, item.SkuID, item.Quantity,item.Status])
+            });
+
+            //console.log(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+            XLSX.utils.book_append_sheet(workbook,worksheet,"Sheet1");
+
+            XLSX.writeFile(workbook,"Invoice_Report.xlsx");
+
+        }
+
+        
+    </script>
+</body>
+</html>

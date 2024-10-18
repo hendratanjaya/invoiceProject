@@ -1,3 +1,15 @@
+.header{
+
+    display: flex;
+    gap: 50px;
+}
+
+.header a{
+    
+    margin-top: 15px;
+}
+
+
 body{
     
     height: auto;
@@ -6,6 +18,9 @@ body{
 .container{
     width: 100%;
     height: 100%;
+    max-width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 .data{
     
@@ -42,4 +57,34 @@ tbody{
 .handler-button{
 
     width: 100%;
+}
+
+input[type="checkbox"]{
+    cursor: pointer;
+    width: 1.2em;
+    height: 1.2em;
+    margin-left: 10px;
+}
+
+.exportForm{
+
+    display: flex;
+    gap: 5vw;
+    margin-bottom: 50px;
+
+}
+.dateContainer label{
+    display: block;
+
+}
+
+#exportBtn{
+
+    height: 40px;
+    margin-top: auto;
+}
+
+.exportContent{
+
+    visibility: visible;
 }

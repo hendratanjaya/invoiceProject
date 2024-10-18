@@ -7,15 +7,20 @@
     <title>INVOICE</title>
     <link rel="stylesheet" type="text/css" href="/view.css">
     
-   
+    
 </head>
 <body>
     
 
     <div class="container">
-        <h1><%= title%></h1>
+        <div class="header">
+            <h1><%= title%></h1>
+            <a href="/export">Export Data</a>
+            <a href="/incomplete">Transaksi Tidak Lengkap</a>
+        </div>
+        
         <div class="data">
-            <form action="/search" method="get">
+            <form action="/detail" method="get">
                 <div class="mb-3"> 
                     <label for="search-invoice" class="form-label">Cari Invoice</label>
                     <div class="input-group">
@@ -35,6 +40,8 @@
                                 <option value="1">Shopee</option>
                                 <option value="2">Tokopedia</option>
                                 <option value="3">Lazada</option>
+                                <option value="4">Dropship</option>
+                                
                             </select>
     
                         <button class="btn btn-primary" type="submit">Input File</button>
@@ -42,38 +49,54 @@
                 </div>
             </form>
         </div>
+        <div class="content">
 
-        <div class="scrollable-table">
-            <table class="table table-bordered">
-                <thead>
-                  <tr>
-                    <!-- <th scope="col">ID</th> -->
-                    <th scope="col">No Pesanan/Invoice</th>
-                    <th scope="col">No Resi</th>
-                    <th scope="col">Tanggal</th>
-                    <th scope="col">No SKU</th>
-                    <th scope="col">Jumlah Pesanan</th>
-                    <th scope="col">Status</th>
-                  </tr>
-                </thead>
-             
-                    <tbody>
+            <form action="/search" method="get" class="row g-3">
+                <div class="col-auto">
+                    <!-- <label for="searchData" class="visually-hidden">Password</label> -->
+                    <input type="text" class="form-control" id="searchDat" name="search_form" placeholder="Masukan no invoice/resi">
+                  </div>
+                  <div class="col-auto">
+                    <button type="submit" class="btn btn-primary mb-3">Cari</button>
+                  </div>
+            </form>
+
+            <div class="scrollable-table">
+    
+                <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <!-- <th scope="col">ID</th> -->
+                        <th scope="col">No Pesanan/Invoice</th>
+                        <th scope="col">No Resi</th>
+                        <th scope="col">Tanggal</th>
+                        <th scope="col">No SKU</th>
+                        <th scope="col">Jumlah Pesanan</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Tipe</th>
                         
-                            <tr>
-                            <% for (let i of invoices){ %>
-                                <!-- <td scope="row"><%=i.Id%></td> -->
-                                <td scope="row"><%=i.OrderNumber %></td>
-                                <td scope="row"><%=i.ReceiptNumber %></td>
-                                <td scope="row"><%=i.OrderDate %></td>
-                                <td scope="row"><%=i.SkuID %></td>
-                                <td scope="row"><%=i.Quantity %></td>
-                                <td scope="row"><%=i.Status %></td>
-                            </tr>
-                        <%}%>
-                      
-                    </tbody>
-                
-            </table>
+                      </tr>
+                    </thead>
+                 
+                        <tbody>
+                            
+                                <tr>
+                                <% for (let i of invoices){ %>
+                                    <!-- <td scope="row"><%=i.Id%></td> -->
+                                    <td scope="row"><%=i.OrderNumber %></td>
+                                    <td scope="row"><%=i.ReceiptNumber %></td>
+                                    <td scope="row"><%=i.OrderDate %></td>
+                                    <td scope="row"><%=i.SkuID %></td>
+                                    <td scope="row"><%=i.Quantity %></td>
+                                    <td scope="row"><%=i.Status %></td>
+                                    <td scope="row"><%=i.Type %></td>
+                                </tr>
+                            <%}%>
+                          
+                        </tbody>
+                    
+                </table>
+            </div>
         </div>
         <!-- <form id="invoice-form" action="/delete" method="post">
 
